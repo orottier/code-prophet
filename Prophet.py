@@ -64,5 +64,5 @@ class Prophet:
             lineContinuations = self.completeLine(script)
             if lineContinuations:
                 return [Completion(text, "Cont: " + str(count)).toJson() for (text, count) in lineContinuations]
-            return [Completion(text, "identifier").toJson() for text in script.tokens]
+            return [Completion(text, "identifier").toJson() for text in script.tokens if text != script.query]
 

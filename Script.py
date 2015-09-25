@@ -6,6 +6,7 @@ class Script(object):
     	column = int(data['column'][0])
     	startColumn = int(data['startColumn'][0])
     	filename = data['filename'][0]
+    	query = data['query'][0]
 
         self.contents = contents.split("\n")
         self.line = line
@@ -17,3 +18,6 @@ class Script(object):
 
         self.currentLine = self.contents[self.line].lstrip()
         self.previousLine = self.contents[self.line - 1].lstrip() if self.line > 0 else None
+
+        self.query = self.currentLine[startColumn:column]
+        self.query = query # always identical?

@@ -43,13 +43,15 @@ class ProphetCompleter( Completer ):
       line = request_data[ 'line_num' ] - 1
       column = request_data[ 'column_num' ] - 1
       startColumn = request_data[ 'start_column' ] - 1
+      query = request_data[ 'query' ]
 
       return {
         'contents': contents,
         'line': line,
         'column': column,
         'startColumn': startColumn,
-        'filename': filename
+        'filename': filename,
+        'query': query
       }
 
 
