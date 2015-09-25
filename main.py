@@ -1,6 +1,7 @@
 import sys
 from Scanner import Scanner
 from Prophet import Prophet
+from Script import Script
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 import urlparse
 import urllib
@@ -41,10 +42,13 @@ class RequestHandler(BaseHTTPRequestHandler):
 		if parsed_path.path == '/heartbeat' :
 			returnJson = {'status':  'ok'}
 		elif parsed_path.path == '/completions':
-			returnJson = prophet.speak(postvars)
+			script = Script(postvars)
+			returnJson = prophet.speak(script)[:500] #truncate at 500 for performance in vim
+			# we need to invalidate cache if truncated, solve later
 		else:
 			returnJson = {'error': 'command ' + parsed_path.path + ' does not exist'}
 
+		print "Returning", len(returnJson), "items"
 		self.wfile.write(json.dumps(returnJson, encoding = 'latin1'))
 
 server = HTTPServer(('', 8080), RequestHandler)

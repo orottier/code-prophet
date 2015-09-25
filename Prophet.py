@@ -27,7 +27,7 @@ class Prophet:
                 allLines[line] += 1
         self.allLines = sorted(allLines.items(), key=operator.itemgetter(1), reverse=True)
 
-        """ prev line context """
+        """ previous line context """
         prevLines = {}
         for key,lines in fileDict.items():
             prev = None;
@@ -45,15 +45,16 @@ class Prophet:
 
 
     def speak(self, script):
-        chunks = set(script['contents'][0].split())
-        # full line suggest
-        if int(script['column'][0]) == 0:
+        # full line suggest for empty lines
+        if not script.currentLine:
             # first line
-            if int(script['line'][0]) == 0:
+            if script.line == 0:
                 return [Completion(text, str(count)).toJson() for (text, count) in self.firstLines]
-            # else:
-            #     return [Completion(text, str(count)).toJson() for (text, count) in self.prevLines[...]]
+            # previous line
+            if script.previousLine and script.previousLine in self.prevLines:
+                return [Completion(text, str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
+            # general
             return [Completion(text, str(count)).toJson() for (text, count) in self.allLines]
         else:
-            return [Completion(text, "identifier").toJson() for text in chunks]
+            return [Completion(text, "identifier").toJson() for text in script.tokens]
 
