@@ -6,6 +6,8 @@ class Scanner:
 	def __init__(self, path, pattern):
 		self.path = path
 		self.pattern = pattern
+		self.files = 0
+		self.lines = 0
 
 	def scan(self):
 		matches = []
@@ -21,8 +23,10 @@ class Scanner:
 				for line in f:
 					line = line.strip()
 					if line:
+						self.lines += 1
 						lines.append(line)
 			if lines:
+				self.files += 1
 				fileDict[fileName] = lines
 
 		return fileDict

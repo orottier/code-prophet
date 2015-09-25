@@ -3,6 +3,8 @@ from itertools import ifilter
 from Completion import Completion
 from Script import Script
 
+MIN_LENGTH = 4
+
 class Prophet:
 
     def __init__(self, fileDict):
@@ -15,16 +17,17 @@ class Prophet:
             first = lines[0]
             if not first in firstLines:
                 firstLines[first] = 0
-            firstLines[first] += 1
+            firstLines[first] += 1./len(first)
         self.firstLines = sorted(firstLines.items(), key=operator.itemgetter(1), reverse=True)
 
         """ no context """
         allLines = {}
         for key,lines in fileDict.items():
             for line in lines:
-                if not line in allLines:
-                    allLines[line] = 0
-                allLines[line] += 1
+                if len(line) >= MIN_LENGTH:
+                    if not line in allLines:
+                        allLines[line] = 0
+                    allLines[line] += 1./len(line)
         self.allLines = sorted(allLines.items(), key=operator.itemgetter(1), reverse=True)
 
         """ previous line context """
@@ -37,7 +40,7 @@ class Prophet:
                         prevLines[prev] = {}
                     if not line in prevLines[prev]:
                         prevLines[prev][line] = 0
-                    prevLines[prev][line] += 1
+                    prevLines[prev][line] += 1./len(line)
                 prev = line
         for key,nextValues in prevLines.items():
             prevLines[key] = sorted(prevLines[key].items(), key=operator.itemgetter(1), reverse=True)
@@ -50,19 +53,23 @@ class Prophet:
 
 
     def speak(self, script):
+        completions = []
+
         # full line suggest for empty lines
         if not script.currentLine:
             # first line
             if script.line == 0:
-                return [Completion(text, "1st: " + str(count)).toJson() for (text, count) in self.firstLines]
+                completions += [Completion(text, "1st: " + str(count)).toJson() for (text, count) in self.firstLines]
             # previous line
             if script.previousLine and script.previousLine in self.prevLines:
-                return [Completion(text, "Prev: " + str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
+                completions += [Completion(text, "Prev: " + str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
             # general
-            return [Completion(text, "All: " + str(count)).toJson() for (text, count) in self.allLines]
+            completions += [Completion(text, "All: " + str(count)).toJson() for (text, count) in self.allLines]
         else:
             lineContinuations = self.completeLine(script)
             if lineContinuations:
-                return [Completion(text, "Cont: " + str(count)).toJson() for (text, count) in lineContinuations]
-            return [Completion(text, "identifier").toJson() for text in script.tokens if text != script.query]
+                completions += [Completion(text, "Cont: " + str(count)).toJson() for (text, count) in lineContinuations]
+            completions += [Completion(text, "identifier").toJson() for text in script.tokens if text != script.query]
+
+        return completions
 

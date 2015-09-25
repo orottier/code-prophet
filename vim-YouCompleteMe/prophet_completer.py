@@ -14,12 +14,11 @@ class ProphetCompleter( Completer ):
   def __init__( self, user_options ):
       super( ProphetCompleter, self ).__init__( user_options )
       self.enabled = False
-      parameters = {'hoi': 'henk'}
-      result = self._Request('heartbeat', parameters)
+      result = self._Request('heartbeat')
       if 'status' in result and result['status'] == 'ok':
         self.enabled = True
 
-  def _Request(self, path, parameters = {}):
+  def _Request(self, path, parameters = {'nop': "nop"}):
       serverLocation = 'http://localhost:8080/'
       timeout = .2
       target = urlparse.urljoin( serverLocation, path )

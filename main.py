@@ -14,6 +14,7 @@ print "Traversing", path, "with pattern", pattern
 
 scanner = Scanner(path, pattern)
 fileDict = scanner.scan()
+print scanner.files, "files, with", scanner.lines, "non blank lines"
 
 prophet = Prophet(fileDict)
 
@@ -37,20 +38,22 @@ class RequestHandler(BaseHTTPRequestHandler):
 			postvars = {}
 
 		print parsed_path
-		print postvars
 
 		if parsed_path.path == '/heartbeat' :
 			returnJson = {'status':  'ok'}
 		elif parsed_path.path == '/completions':
 			script = Script(postvars)
+			script.display()
 			returnJson = prophet.speak(script)[:500] #truncate at 500 for performance in vim
 			# we need to invalidate cache if truncated, solve later
 		else:
 			returnJson = {'error': 'command ' + parsed_path.path + ' does not exist'}
 
 		print "Returning", len(returnJson), "items"
+		print
 		self.wfile.write(json.dumps(returnJson, encoding = 'latin1'))
 
 server = HTTPServer(('', 8080), RequestHandler)
 print "API listening at port 8080"
+print
 server.serve_forever()

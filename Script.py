@@ -14,10 +14,27 @@ class Script(object):
         self.startColumn = startColumn
         self.filename = filename
 
+        # split file by whitespace, can be more intelligent
         self.tokens = set(contents.split())
 
         self.currentLine = self.contents[self.line].lstrip()
-        self.previousLine = self.contents[self.line - 1].lstrip() if self.line > 0 else None
 
+        # find the previous, non blank line
+        previousLine = None
+        lineBack = 0
+        while self.line - lineBack > 0 and not previousLine:
+        	lineBack += 1
+        	previousLine = self.contents[self.line - lineBack].lstrip()
+        self.previousLine = previousLine
+
+        # the text that is already typed, used to filter the completions
         self.query = self.currentLine[startColumn:column]
         self.query = query # always identical?
+
+    def display(self):
+    	print "Script: ", self.filename
+    	print "Line", self.line, "Column", self.column, "StartColumn", self.startColumn
+    	print "Current Line: ", self.currentLine
+    	print "Previous Line: ", self.previousLine
+    	print "Query: ", self.query
+    	print
