@@ -22,6 +22,12 @@ class ProphetCompleter( Completer ):
       """ Just python """
       return [ 'python' ]
 
+  def ShouldUseNow( self, request_data ):
+      """ disable caching """
+      self._completions_cache.Invalidate()
+      """ Alway suggest completions, not only on triggers """
+      return self.enabled
+
   def _Request(self, path, parameters = {'nop': "nop"}):
       serverLocation = 'http://localhost:8080/'
       timeout = .2
@@ -66,7 +72,6 @@ class ProphetCompleter( Completer ):
 
 
   def ComputeCandidates( self, request_data ):
-    if self.enabled:
       script = self._GetScript( request_data )
       completions = self._Request('completions', script)
       return [ responses.BuildCompletionData(
