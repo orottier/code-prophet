@@ -15,7 +15,5 @@ class Script(object):
 
         self.tokens = set(contents.split())
 
-        self.currentLine = self.contents[self.line].strip()
-        self.previousLine = self.contents[self.line - 1].strip() if self.line > 0 else None
-
-        print "curLineEmpty", not self.currentLine, "prevLineEmpty", not self.previousLine
+        self.currentLine = self.contents[self.line].lstrip()
+        self.previousLine = self.contents[self.line - 1].lstrip() if self.line > 0 else None

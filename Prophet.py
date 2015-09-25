@@ -43,18 +43,26 @@ class Prophet:
             prevLines[key] = sorted(prevLines[key].items(), key=operator.itemgetter(1), reverse=True)
         self.prevLines = prevLines
 
+    def completeLine(self, script):
+        line = script.currentLine
+        offset = script.column - script.startColumn
+        return [(complete[len(line) - offset:], count) for (complete, count) in self.allLines if complete.startswith(line)]
+
 
     def speak(self, script):
         # full line suggest for empty lines
         if not script.currentLine:
             # first line
             if script.line == 0:
-                return [Completion(text, str(count)).toJson() for (text, count) in self.firstLines]
+                return [Completion(text, "1st: " + str(count)).toJson() for (text, count) in self.firstLines]
             # previous line
             if script.previousLine and script.previousLine in self.prevLines:
-                return [Completion(text, str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
+                return [Completion(text, "Prev: " + str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
             # general
-            return [Completion(text, str(count)).toJson() for (text, count) in self.allLines]
+            return [Completion(text, "All: " + str(count)).toJson() for (text, count) in self.allLines]
         else:
+            lineContinuations = self.completeLine(script)
+            if lineContinuations:
+                return [Completion(text, "Cont: " + str(count)).toJson() for (text, count) in lineContinuations]
             return [Completion(text, "identifier").toJson() for text in script.tokens]
 
