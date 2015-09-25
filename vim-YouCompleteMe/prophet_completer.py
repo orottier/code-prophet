@@ -18,22 +18,16 @@ class ProphetCompleter( Completer ):
       if 'status' in result and result['status'] == 'ok':
         self.enabled = True
 
+  def SupportedFiletypes( self ):
+      """ Just python """
+      return [ 'python' ]
+
   def _Request(self, path, parameters = {'nop': "nop"}):
       serverLocation = 'http://localhost:8080/'
       timeout = .2
       target = urlparse.urljoin( serverLocation, path )
       response = requests.post( target, data = parameters, timeout = timeout )
       return response.json()
-
-  def SupportedFiletypes( self ):
-      """ Just python """
-      return [ 'python' ]
-
-  def ShouldUseNow( self, request_data ):
-      """ disable caching """
-      self._completions_cache.Invalidate()
-      """ Alway suggest completions, not only on triggers """
-      return self.enabled
 
   def _GetScript( self, request_data ):
       filename = request_data[ 'filepath' ]
@@ -71,15 +65,16 @@ class ProphetCompleter( Completer ):
         return None
 
 
-  def ComputeCandidatesInner( self, request_data ):
-    script = self._GetScript( request_data )
-    completions = self._Request('completions', script)
-    return [ responses.BuildCompletionData(
-                ToUtf8IfNeeded( completion['name'] ),
-                ToUtf8IfNeeded( completion['description'] ),
-                ToUtf8IfNeeded( completion['docstring'] ),
-                extra_data = self._GetExtraData( completion ) )
-             for completion in completions]
+  def ComputeCandidates( self, request_data ):
+    if self.enabled:
+      script = self._GetScript( request_data )
+      completions = self._Request('completions', script)
+      return [ responses.BuildCompletionData(
+                  ToUtf8IfNeeded( completion['name'] ),
+                  ToUtf8IfNeeded( completion['description'] ),
+                  ToUtf8IfNeeded( completion['docstring'] ),
+                  extra_data = self._GetExtraData( completion ) )
+               for completion in completions]
 
   def DefinedSubcommands( self ):
     return []
