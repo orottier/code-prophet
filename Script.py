@@ -28,7 +28,7 @@ class Script(object):
         self.previousLine = previousLine
 
         # the text that is already typed, used to filter the completions
-        self.query = self.currentLine[startColumn:column]
+        self.query = self.contents[self.line][startColumn:column] # do not strip the whitespace
         self.query = query # always identical?
 
     def display(self):

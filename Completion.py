@@ -13,7 +13,7 @@ class Completion(object):
         self.module_path = ""
 
     def matches(self, query):
-        return self.name.startswith(query)
+        return query in self.name
 
     def toJson(self):
         return {

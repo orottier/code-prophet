@@ -4,7 +4,7 @@ from Completion import LineCompletion, TokenCompletion, CompletionBuilder
 from Script import Script
 
 MIN_TOKEN_LENGTH = 4
-MAX_COMPLETIONS = 50
+MAX_COMPLETIONS = 10
 
 class Prophet:
 
@@ -47,10 +47,16 @@ class Prophet:
             prevLines[key] = sorted(prevLines[key].items(), key=operator.itemgetter(1), reverse=True)
         self.prevLines = prevLines
 
-    def completeLine(self, script):
+    def completeLine(self, script, builder):
         line = script.currentLine
         offset = script.column - script.startColumn
-        return [(complete[len(line) - offset:], count) for (complete, count) in self.allLines if complete.startswith(line)]
+
+        if script.previousLine and script.previousLine in self.prevLines:
+            completions = [(complete[len(line) - offset:], 500*count) for (complete, count) in self.prevLines[script.previousLine] if line in complete]
+            builder.addMany([LineCompletion(text, "ContPrev", count) for (text, count) in completions])
+
+        completions = [(complete[len(line) - offset:], count) for (complete, count) in self.allLines if line in complete]
+        builder.addMany([LineCompletion(text, "ContAll", count) for (text, count) in completions])
 
 
     def speak(self, script):
@@ -71,9 +77,7 @@ class Prophet:
             # general
             builder.addMany([LineCompletion(text, "All", count) for (text, count) in self.allLines])
         else:
-            lineContinuations = self.completeLine(script)
-            if lineContinuations:
-                builder.addMany([LineCompletion(text, "Cont", count) for (text, count) in lineContinuations])
+            self.completeLine(script, builder)
             builder.addMany([TokenCompletion(text, "identifier") for text in script.tokens if text != script.query])
 
         return builder.getCompletions()
