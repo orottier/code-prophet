@@ -1,9 +1,10 @@
 import operator
 from itertools import ifilter
-from Completion import Completion
+from Completion import LineCompletion, TokenCompletion, CompletionBuilder
 from Script import Script
 
-MIN_LENGTH = 4
+MIN_TOKEN_LENGTH = 4
+MAX_COMPLETIONS = 50
 
 class Prophet:
 
@@ -17,17 +18,17 @@ class Prophet:
             first = lines[0]
             if not first in firstLines:
                 firstLines[first] = 0
-            firstLines[first] += 1./len(first)
+            firstLines[first] += 1
         self.firstLines = sorted(firstLines.items(), key=operator.itemgetter(1), reverse=True)
 
         """ no context """
         allLines = {}
         for key,lines in fileDict.items():
             for line in lines:
-                if len(line) >= MIN_LENGTH:
+                if len(line) >= MIN_TOKEN_LENGTH:
                     if not line in allLines:
                         allLines[line] = 0
-                    allLines[line] += 1./len(line)
+                    allLines[line] += 1
         self.allLines = sorted(allLines.items(), key=operator.itemgetter(1), reverse=True)
 
         """ previous line context """
@@ -40,7 +41,7 @@ class Prophet:
                         prevLines[prev] = {}
                     if not line in prevLines[prev]:
                         prevLines[prev][line] = 0
-                    prevLines[prev][line] += 1./len(line)
+                    prevLines[prev][line] += 1
                 prev = line
         for key,nextValues in prevLines.items():
             prevLines[key] = sorted(prevLines[key].items(), key=operator.itemgetter(1), reverse=True)
@@ -53,23 +54,27 @@ class Prophet:
 
 
     def speak(self, script):
-        completions = []
+        completions = self.getCompletions(script)
+        return completions
+
+    def getCompletions(self, script):
+        builder = CompletionBuilder(script.query, maxItems = MAX_COMPLETIONS, minTokenLength = MIN_TOKEN_LENGTH)
 
         # full line suggest for empty lines
         if not script.currentLine:
             # first line
             if script.line == 0:
-                completions += [Completion(text, "1st: " + str(count)).toJson() for (text, count) in self.firstLines]
+                builder.addMany([LineCompletion(text, "1st", count) for (text, count) in self.firstLines])
             # previous line
             if script.previousLine and script.previousLine in self.prevLines:
-                completions += [Completion(text, "Prev: " + str(count)).toJson() for (text, count) in self.prevLines[script.previousLine]]
+                builder.addMany([LineCompletion(text, "Prev", 500*count) for (text, count) in self.prevLines[script.previousLine]])
             # general
-            completions += [Completion(text, "All: " + str(count)).toJson() for (text, count) in self.allLines]
+            builder.addMany([LineCompletion(text, "All", count) for (text, count) in self.allLines])
         else:
             lineContinuations = self.completeLine(script)
             if lineContinuations:
-                completions += [Completion(text, "Cont: " + str(count)).toJson() for (text, count) in lineContinuations]
-            completions += [Completion(text, "identifier").toJson() for text in script.tokens if text != script.query]
+                builder.addMany([LineCompletion(text, "Cont", count) for (text, count) in lineContinuations])
+            builder.addMany([TokenCompletion(text, "identifier") for text in script.tokens if text != script.query])
 
-        return completions
+        return builder.getCompletions()
 

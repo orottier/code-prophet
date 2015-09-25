@@ -44,8 +44,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 		elif parsed_path.path == '/completions':
 			script = Script(postvars)
 			script.display()
-			returnJson = prophet.speak(script)[:500] #truncate at 500 for performance in vim
-			# we need to invalidate cache if truncated, solve later
+			returnJson = prophet.speak(script)
 		else:
 			returnJson = {'error': 'command ' + parsed_path.path + ' does not exist'}
 
