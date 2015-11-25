@@ -5,7 +5,7 @@ class Completion(object):
 
         self.name = name
         self.score = score
-        self.realScore = 1. * score / len(name)
+        self.realScore = (1. * score / len(name)) if len(name) else 0
         self.description = description + " (" + str(round(self.realScore, 3)) + ")"
 
         self.line = 12
