@@ -7,11 +7,17 @@ import urlparse
 import urllib
 import json
 import cgi
+import argparse
 
-path = sys.argv[1]
-pattern = sys.argv[2]
+parser = argparse.ArgumentParser(description='Fire up the Prophet code autocompleter API')
+parser.add_argument('path', help='root directory of code')
+parser.add_argument('pattern', help='source files should match this pattern')
+
+args = parser.parse_args()
+path = args.path
+pattern = args.pattern
+
 print "Traversing", path, "with pattern", pattern
-
 scanner = Scanner(path, pattern)
 fileDict = scanner.scan()
 print scanner.files, "files, with", scanner.lines, "non blank lines"
@@ -20,6 +26,11 @@ prophet = Prophet(fileDict)
 
 #set up API
 class RequestHandler(BaseHTTPRequestHandler):
+
+	def do_GET(self):
+		self.send_response(200)
+		self.wfile.write("<h1>Prophet code completer</h1> path: " + path + "<br> pattern: " + pattern)
+
 	def do_POST(self):
 		self.send_response(200)
 		self.send_header('Access-Control-Allow-Origin', '*')
