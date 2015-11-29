@@ -5,13 +5,18 @@ class Completion(object):
 
         self.name = name
         self.score = score
-        self.realScore = (1. * score / len(name)) if len(name) else 0
+        self.realScore = (1. * score / len(name)) if len(name) else score
         self.description = description + " (" + str(round(self.realScore, 3)) + ")"
 
         self.line = 12
         self.column = 4
         self.module_path = ""
 
+    """ Completions are identical if their name is identical """
+    def __eq__(self, other):
+        return self.name == other.name
+
+    """ Should we suggest this token when user already typed `query`? """
     def matches(self, query):
         return query in self.name
 
@@ -34,16 +39,24 @@ class CompletionBuilder:
         self.minTokenLength = minTokenLength
 
     def add(self, completion, skipMaxCheck = False):
-        if skipMaxCheck or len(self.completions) < self.maxItems and completion.matches(self.query):
-            self.completions.append(completion)
+        if len(self.completions) >= self.maxItems and not skipMaxCheck:
+            return
+        if not completion.matches(self.query):
+            return
+        for existing in self.completions:
+            if completion == existing:
+                existing.score += completion.score
+                return
 
-            if completion.mode == "line":
-                tokens = completion.name.split()
-                if len(tokens) > 1 and len(tokens[0]) >= self.minTokenLength:
-                    token = tokens[0]
-                    if not token in self.extraTokens:
-                        self.extraTokens[token] = 0
-                    self.extraTokens[token] += completion.score
+        self.completions.append(completion)
+
+        if completion.mode == "line":
+            tokens = completion.name.split()
+            if len(tokens) > 1 and len(tokens[0]) >= self.minTokenLength:
+                token = tokens[0]
+                if not token in self.extraTokens:
+                    self.extraTokens[token] = 0
+                self.extraTokens[token] += completion.score
 
 
     def addMany(self, completions, skipMaxCheck = False):
